@@ -38,3 +38,16 @@ All of the patterns introduced in the [github.com/antonio-alexander/go-queue](gi
 Keep in mind that internally, the event queue is provided for usability, but because the channel isn't buffered, it can fail if no-one is listening to the other side of the channel. By default this timeout is set to 0, to prevent loss of performance, a polling implementation with flush or DequeueMultiple() is preferred when using infinite queues.
 
 The "grow" size provided on instantiation is a source of tuning, in the event the size is too small, you may allocate data more often and burn cpu usage, if the size is too big, you may allocate more data than you actually need.
+
+## Testing
+
+These are the avaialble unit tests:
+
+- GarbageCollect
+- Enqueue
+- EnqueueMultiple
+- EnqueueInFront
+
+These are the available function tests:
+
+- Queue: can be used to verify that queue works as expected (for infinite queues)

@@ -1,0 +1,45 @@
+name: go-queue
+
+on:
+  push:
+  release:
+    types: [published]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Validate folder
+        run: |
+          cd /home/runner/work/go-queue/go-queue
+          ls -l
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      - name: Test go-queue/finite
+        continue-on-error: true
+        run: |
+          cd /home/runner/work/go-queue/go-queue/finite
+          go mod download
+          go test -v ./... -coverprofile /tmp/go-queue-finite.out > /tmp/go-queue-finite.log
+      - name: Test go-queue/infinite
+        continue-on-error: true
+        run: |
+          cd /home/runner/work/go-queue/go-queue/infinite
+          go mod download
+          go test -v ./... -coverprofile /tmp/go-queue-infinite.out > /tmp/go-queue-infinite.log
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifacts
+          path: |
+            /tmp/go-queue-finite.log
+            /tmp/go-queue-infinite.log
+            /tmp/go-queue-finite.out
+            /tmp/go-queue-infinite.out
+          retention-days: 1
