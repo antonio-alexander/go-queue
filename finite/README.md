@@ -71,3 +71,15 @@ Running Average:
 ```go
 //TODO: generate code to show a running average calculation
 ```
+
+## Testing
+
+Similar to the [github.com/antonio-alexander/go-queue](github.com/antonio-alexander/go-queue) package, some of the interfaces (or implementations) specific to the finite implementation, have tests that can be used to verify that your implementation matches the expected finite implementation.
+
+These are the avaialble unit tests:
+
+- Resize: can be used to verify the Resize() function
+- Enqueue: can be used to verify the Enqueue() function for finite queues
+- EnqueueMultiple: can be used to verify the EnqueueMultiple() function for finite queues
+- EnqueueInFront: can be used to verify the EnqueueInFront() function for finite queues
+- EnqueueLossy: can be used to verify the EnqueueLossy() function
