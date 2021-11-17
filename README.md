@@ -274,6 +274,53 @@ for {
 }
 ```
 
+## Testing
+
+The existing tests are implemented as "code" and can be used within your implementation's tests to "confirm" that they implement the interfaces as expected by "this" version of the go-queue package.
+
+Take note that there isn't an enqueue test, this is because that's fairly specific to the implementation.
+
+These are the avaialble unit tests:
+
+- New: can be used to verify the constructor
+- GarbageCollect: can be used to verify garbage collection
+- Dequeue: can be used to verify dequeue
+- DequeueMultiple: can be used to verify dequeue multiple
+- Flush: can be used to verify flush
+- Peek: can be used to verify peek
+- PeekFromHead: can be used to verify peek from head
+
+These are the available function/integration tests:
+
+- Event: can be used to verify that event signals work as expected
+- Info: can be used to verify that info works as expected (finite leaning)
+- Queue: can be used to verify that queue works as expected (in general)
+- Async: can be used to verify if safe for concurrent usage
+
+To use one of the tests, you can use the following code snippet. Keep in mind that in order to test, the queue/constructor needs to implement ALL of the interfaces expected by the test (and by association they need to implement those interfaces as expected).
+
+```go
+import (
+    "testing"
+
+    goqueue "github.com/antonio-alexander/go-queue"
+    finite "github.com/antonio-alexander/go-queue/finite"
+
+    goqueue_tests "github.com/antonio-alexander/go-queue/tests"
+)
+
+func TestQueue(t *testing.T) {
+    goqueue_tests.Queue(t, func(size int) interface {
+        goqueue.Owner
+        goqueue.Enqueuer
+        goqueue.Dequeuer
+        goqueue.Info
+    } {
+        return finite.New(size)
+    })
+}
+```
+
 ## Finite Queue
 
 This is a fixed size fifo, when the queue is full, it won't allow you to place any more items inside the queue (sans EnqueueLossy). For more information, look at this [README.md](./finite/README.md).
