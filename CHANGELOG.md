@@ -5,6 +5,10 @@ All notable changes to this service will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.1.1] - 12/02/21
+
+- Updated internal code for sending signal to make the timeout optional and removed the configuration for signal timeout to the package that implements it
+
 ## [1.1.0] - 11/16/21
 
 - Added tests
