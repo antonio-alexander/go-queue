@@ -106,7 +106,7 @@ func (q *queueFinite) Dequeue() (item interface{}, underflow bool) {
 	defer q.Unlock()
 
 	if item, q.data, underflow = internal.Dequeue(q.data); !underflow {
-		internal.SendSignal(q.signalOut, 0)
+		internal.SendSignal(q.signalOut)
 	}
 
 	return
@@ -119,7 +119,7 @@ func (q *queueFinite) DequeueMultiple(n int) (items []interface{}) {
 	var underflow bool
 
 	if items, q.data, underflow = internal.DequeueMultiple(n, q.data); !underflow {
-		internal.SendSignal(q.signalOut, 0)
+		internal.SendSignal(q.signalOut)
 	}
 
 	return
@@ -135,7 +135,7 @@ func (q *queueFinite) Flush() (items []interface{}) {
 		return
 	}
 	if items, q.data, underflow = internal.DequeueMultiple(cap(q.data), q.data); !underflow {
-		internal.SendSignal(q.signalOut, 0)
+		internal.SendSignal(q.signalOut)
 	}
 
 	return
@@ -146,7 +146,7 @@ func (q *queueFinite) Enqueue(item interface{}) (overflow bool) {
 	defer q.Unlock()
 
 	if overflow, q.data = internal.Enqueue(q.data, item); !overflow {
-		internal.SendSignal(q.signalIn, 0)
+		internal.SendSignal(q.signalIn)
 	}
 
 	return
@@ -159,7 +159,7 @@ func (q *queueFinite) EnqueueMultiple(items []interface{}) (remainingElements []
 	for i, item := range items {
 		if overflow, q.data = internal.Enqueue(q.data, item); overflow {
 			remainingElements = items[i:]
-			internal.SendSignal(q.signalIn, 0)
+			internal.SendSignal(q.signalIn)
 
 			return
 		}
@@ -177,7 +177,7 @@ func (q *queueFinite) EnqueueLossy(item interface{}) (discardedElement interface
 		discardedElement, q.data, _ = internal.Dequeue(q.data)
 	}
 	_, q.data = internal.Enqueue(q.data, item)
-	internal.SendSignal(q.signalIn, 0)
+	internal.SendSignal(q.signalIn)
 
 	return
 }
@@ -187,7 +187,7 @@ func (q *queueFinite) EnqueueInFront(item interface{}) (overflow bool) {
 	defer q.Unlock()
 
 	if overflow, q.data = internal.EnqueueInFront(q.data, item); !overflow {
-		internal.SendSignal(q.signalIn, 0)
+		internal.SendSignal(q.signalIn)
 	}
 
 	return
