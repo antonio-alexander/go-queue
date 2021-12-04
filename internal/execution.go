@@ -85,10 +85,10 @@ func DequeueMultiple(n int, data []interface{}) ([]interface{}, []interface{}, b
 //SendSignal will perform a non-blocking send with or without
 // a timeout depending on whether ConfigSignalTimeout is greater
 // than 0
-func SendSignal(signal chan struct{}) bool {
-	if timeout := ConfigSignalTimeout; timeout > 0 {
+func SendSignal(signal chan struct{}, timeout ...time.Duration) bool {
+	if len(timeout) > 0 {
 		select {
-		case <-time.After(timeout):
+		case <-time.After(timeout[0]):
 		case signal <- struct{}{}:
 			return true
 		}

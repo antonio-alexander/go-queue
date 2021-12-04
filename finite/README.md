@@ -83,3 +83,18 @@ These are the avaialble unit tests:
 - EnqueueMultiple: can be used to verify the EnqueueMultiple() function for finite queues
 - EnqueueInFront: can be used to verify the EnqueueInFront() function for finite queues
 - EnqueueLossy: can be used to verify the EnqueueLossy() function
+
+## Event-based operations
+
+```go
+type Event interface {
+    GetSignalIn() (signal <-chan struct{})
+    GetSignalOut() (signal <-chan struct{})
+}
+```
+
+finite implements the Event interface from go-queue. Since the implementation uses a buffered channel (size comes from the queue size) AND the signals returned for both methods are the same (unless you re-create the pointer or re-size), only one "listener" will receive an individual signal. As a result, for the finite queue implementation, the following should always be true:
+
+- If multiple entities are waiting on a signalIn to dequeue, only one will receive the signal and dequeues that depend on that should never underflow
+- If multiple entities are waiting on a signalOut to enqueue, only one will receive the signal and enqueues that depend on that should never overflow
+- On re-size all signals are closed and will need to be re-aquired to be used
