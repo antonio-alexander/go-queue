@@ -20,13 +20,13 @@ func New(size int) interface {
 	goqueue.Dequeuer
 	goqueue.Enqueuer
 	goqueue.EnqueueInFronter
-	goqueue.Info
+	goqueue.Length
 	goqueue.Event
 	goqueue.Peeker
 	EnqueueLossy
 	Resizer
+	Capacity
 } {
-
 	maxSize := size
 	if maxSize < 1 {
 		maxSize = 1

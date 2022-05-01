@@ -1,5 +1,24 @@
 package goqueue
 
+import "encoding"
+
+//These types are specifically provided to attempt to communicate support
+// for how queues would be able to store data in a persistent way no matter
+// the data type (empty interface)
+type (
+	BinaryMarshaler = encoding.BinaryMarshaler
+
+	BinaryUnmarshaler = encoding.BinaryUnmarshaler
+
+	//Bytes is provided to make it easier to create jagged arrays; two
+	// dimensional arrays are nice, but they work off the idea that
+	// each row has the same number of elements which doesnt work for
+	// the use case for a queue...
+	//KIM: Bytes is a type that can be used to traverse package boundaries
+	// unlike an anonymous struct or Bytes defined by some other package
+	Bytes []byte
+)
+
 //Owner provides functions that directly affect the underlying pointers
 // and data structures of a queue pointers. The Close() function should
 // ready the underlying pointer for garbage collection and return a slice
@@ -51,13 +70,10 @@ type EnqueueInFronter interface {
 	EnqueueInFront(item interface{}) (overflow bool)
 }
 
-//Info can be used to determine the number of items in the queue or its capacity;
-// keep in mind that capacity's output is dependent on the underlying logic for
-// the queue. For example an infinite queue's capacity will change as you exceed
-// the limit of the queue
-type Info interface {
+//Length can be used to determine how many items are inside a queue at
+// any given time
+type Length interface {
 	Length() (size int)
-	Capacity() (capacity int)
 }
 
 //Event can be used to get a read-only signal that would indicate whether data was

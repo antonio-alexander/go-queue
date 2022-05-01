@@ -22,11 +22,10 @@ func New(growSize int) interface {
 	goqueue.Dequeuer
 	goqueue.Enqueuer
 	goqueue.EnqueueInFronter
-	goqueue.Info
+	goqueue.Length
 	goqueue.Event
 	goqueue.Peeker
 } {
-
 	if growSize < 1 {
 		growSize = 1
 	}
@@ -75,7 +74,7 @@ func (q *queueInfinite) Dequeue() (item interface{}, underflow bool) {
 	defer q.Unlock()
 
 	item, q.data, underflow = internal.Dequeue(q.data)
-	internal.SendSignal(q.signalOut)
+	internal.SendSignal(q.signalOut, ConfigSignalTimeout)
 
 	return
 }
@@ -87,7 +86,7 @@ func (q *queueInfinite) DequeueMultiple(n int) (items []interface{}) {
 	var underflow bool
 
 	if items, q.data, underflow = internal.DequeueMultiple(n, q.data); !underflow {
-		internal.SendSignal(q.signalOut)
+		internal.SendSignal(q.signalOut, ConfigSignalTimeout)
 	}
 
 	return
@@ -100,7 +99,7 @@ func (q *queueInfinite) Flush() (items []interface{}) {
 	var underflow bool
 
 	if items, q.data, underflow = internal.DequeueMultiple(cap(q.data), q.data); !underflow {
-		internal.SendSignal(q.signalOut)
+		internal.SendSignal(q.signalOut, ConfigSignalTimeout)
 	}
 
 	return
@@ -111,7 +110,7 @@ func (q *queueInfinite) Enqueue(item interface{}) (overflow bool) {
 	defer q.Unlock()
 
 	q.data = enqueue(q.data, item, q.growSize)
-	internal.SendSignal(q.signalIn)
+	internal.SendSignal(q.signalIn, ConfigSignalTimeout)
 
 	return
 }
@@ -122,7 +121,7 @@ func (q *queueInfinite) EnqueueMultiple(items []interface{}) (remainingElements 
 
 	for _, item := range items {
 		q.data = enqueue(q.data, item, q.growSize)
-		internal.SendSignal(q.signalIn)
+		internal.SendSignal(q.signalIn, ConfigSignalTimeout)
 	}
 
 	return
@@ -133,7 +132,7 @@ func (q *queueInfinite) EnqueueInFront(item interface{}) (overflow bool) {
 	defer q.Unlock()
 
 	q.data = enqueueInFront(q.data, item, q.growSize)
-	internal.SendSignal(q.signalIn)
+	internal.SendSignal(q.signalIn, ConfigSignalTimeout)
 
 	return
 }
@@ -142,12 +141,6 @@ func (q *queueInfinite) Length() (size int) {
 	q.RLock()
 	defer q.RUnlock()
 	return len(q.data)
-}
-
-func (q *queueInfinite) Capacity() (capacity int) {
-	q.RLock()
-	defer q.RUnlock()
-	return cap(q.data)
 }
 
 func (q *queueInfinite) GetSignalIn() (signal <-chan struct{}) {
