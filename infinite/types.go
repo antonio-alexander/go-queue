@@ -1,4 +1,4 @@
-package infinite_test
+package infinite
 
 import "time"
 

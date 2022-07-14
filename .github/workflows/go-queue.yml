@@ -2,21 +2,55 @@ name: go-queue
 
 on:
   push:
+    branches: ["main"]
+  pull_request:
   release:
     types: [published]
 
 jobs:
-  test:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v2
+      - name: Get version
+        run: |
+          version=`cat /home/runner/work/go-queue/go-queue/version.json | jq '.Version' | sed 's/"//g'`
+          echo $version
+          echo "version=$version" >> $GITHUB_ENV
+      - name: Generate build artifacts
+        run: |
+          mkdir -p /tmp
+          echo ${{ env.version }} >> /tmp/version
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifacts
+          path: |
+            /tmp/version
+
+  go_lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.16
+      - uses: actions/checkout@v3
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.44.2
+          working-directory: .
+          args: --verbose
+
+  go_test:
+    needs: [go_lint]
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
-      - name: Validate folder
-        run: |
-          cd /home/runner/work/go-queue/go-queue
-          ls -l
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
@@ -43,3 +77,30 @@ jobs:
             /tmp/go-queue-finite.out
             /tmp/go-queue-infinite.out
           retention-days: 1
+
+  git_push_tag:
+    if: github.ref == 'refs/heads/main'
+    needs: [go_test, version]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: artifacts
+          path: /tmp
+      - name: Get version
+        run: |
+          version=`cat /tmp/version`
+          echo "version=$version" >> $GITHUB_ENV
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: "0"
+      - name: Push/Update go-queue version
+        uses: anothrNick/github-tag-action@1.36.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+          CUSTOM_TAG: v${{ env.version }}

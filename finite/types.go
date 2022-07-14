@@ -12,3 +12,9 @@ type Resizer interface {
 type EnqueueLossy interface {
 	EnqueueLossy(item interface{}) (discardedElement interface{}, discard bool)
 }
+
+//Capacity can be used to determine the maximum size of a given
+// queue
+type Capacity interface {
+	Capacity() (capacity int)
+}
