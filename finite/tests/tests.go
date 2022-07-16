@@ -30,9 +30,6 @@ func TestNew(t *testing.T, newQueue func(int) interface {
 			},
 		}
 		for cDesc, c := range cases {
-			//create the queue using the newQueue function, assert
-			// that it is not nil and validate that the capacity is
-			// as expected, then close the queue
 			q := newQueue(c.iSize)
 			if assert.NotNil(t, q) {
 				if capacity := q.Capacity(); capacity != c.oCapacity {
@@ -83,7 +80,6 @@ func TestResize(t *testing.T, newQueue func(int) interface {
 			},
 		}
 		for cDesc, c := range cases {
-			//TODO: add documentation
 			q := newQueue(c.iSize)
 			for _, value := range c.iExamples {
 				overflow := q.Enqueue(value)
@@ -126,18 +122,17 @@ func TestCapacity(t *testing.T, newQueue func(int) interface {
 			},
 		}
 		for cDesc, c := range cases {
-			//TODO: add documentation
 			q := newQueue(c.iSize)
 			capacity := q.Capacity()
 			assert.Equal(t, c.iSize, capacity, casef, cDesc)
-			overflow := q.Enqueue(struct{}{})
+			overflow := q.Enqueue(&goqueue.Example{})
 			assert.False(t, overflow, casef, cDesc)
 			assert.Equal(t, 1, q.Length(), casef, cDesc)
 			_, underflow := q.Dequeue()
 			assert.False(t, underflow, casef, cDesc)
 			assert.Equal(t, 0, q.Length(), casef, cDesc)
 			for i := 0; i < c.iSize; i++ {
-				overflow := q.Enqueue(struct{}{})
+				overflow := q.Enqueue(&goqueue.Example{})
 				assert.False(t, overflow, casef, cDesc)
 			}
 			assert.Equal(t, c.iSize, q.Length(), casef, cDesc)
@@ -291,7 +286,6 @@ func TestEnqueueInFront(t *testing.T, newQueue func(int) interface {
 			},
 		}
 		for cDesc, c := range cases {
-			//TODO: add documentation
 			q := newQueue(c.iSize)
 			for _, element := range c.iExamples {
 				overflow := q.Enqueue(element)

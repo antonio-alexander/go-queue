@@ -5,6 +5,10 @@ All notable changes to this service will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.1] - 05/01/22
+
+- Updated remaining tests where the Example data wasn't used
+
 ## [1.2.0] - 05/01/22
 
 - Somewhat broke the API, removed the "Info" interface, separating the Length and Capacity functions, goqueue owns Length while Capacity is owned by finite

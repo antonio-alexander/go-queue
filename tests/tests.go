@@ -24,6 +24,9 @@ const casef string = "case: %s"
 // 	return m.Alloc, m.TotalAlloc
 // }
 
+//KIM: this test doesn't directly do a good job of confirming garbage collection
+// due to the difficulty of figuring out how much data in the heap was present
+// before and after garbage collection
 func TestGarbageCollect(t *testing.T, newQueue func(int) interface {
 	goqueue.Owner
 	goqueue.GarbageCollecter
@@ -36,12 +39,9 @@ func TestGarbageCollect(t *testing.T, newQueue func(int) interface {
 			iEnqueue int
 		}{
 			"normal": {
-				iSize: 100,
+				iSize:    100,
+				iEnqueue: 100,
 			},
-			//TODO: full
-			//TODO: empty
-			//TODO: full-1
-			//TODO: empty+1
 		}
 		for cDesc, c := range cases {
 			q := newQueue(c.iSize)
@@ -96,7 +96,6 @@ func TestDequeue(t *testing.T, newQueue func(int) interface {
 			},
 		}
 		for cDesc, c := range cases {
-			//TODO: add documentation
 			q := newQueue(c.iSize)
 			for _, item := range c.iExamples {
 				overflow := q.Enqueue(item)
@@ -117,6 +116,11 @@ func TestDequeue(t *testing.T, newQueue func(int) interface {
 	}
 }
 
+//TestDequeueMultiple is used to validate the functionality of
+// attempting to dequeue multiple items, it does this by pushing
+// a number of items into the queue, and then popping them out
+// with the idea that the function will always the number of elements
+// requested (in the order pushed) or whatever is in the queue
 func TestDequeueMultiple(t *testing.T, newQueue func(int) interface {
 	goqueue.Owner
 	goqueue.Enqueuer
@@ -159,7 +163,6 @@ func TestDequeueMultiple(t *testing.T, newQueue func(int) interface {
 			},
 		}
 		for cDesc, c := range cases {
-			//TODO: add documentation
 			q := newQueue(c.iSize)
 			for _, item := range c.iExamples {
 				overflow := q.Enqueue(item)
@@ -203,7 +206,6 @@ func TestFlush(t *testing.T, newQueue func(int) interface {
 			},
 		}
 		for cDesc, c := range cases {
-			//TODO: add documentation
 			q := newQueue(c.iSize)
 			remainingElements, overflow := goqueue.ExampleEnqueueMultiple(q, c.iExamples)
 			//KIM: this is testing dequeue, so this should always succeed
@@ -254,7 +256,6 @@ func TestPeek(t *testing.T, newQueue func(int) interface {
 			},
 		}
 		for cDesc, c := range cases {
-			//TODO: add documentation
 			q := newQueue(c.iSize)
 			for _, input := range c.iExamples {
 				overflow := q.Enqueue(input)
@@ -319,7 +320,6 @@ func TestPeekFromHead(t *testing.T, newQueue func(int) interface {
 			},
 		}
 		for cDesc, c := range cases {
-			//TODO: add documentation
 			q := newQueue(c.iSize)
 			for _, input := range c.iExamples {
 				overflow := q.Enqueue(input)
@@ -353,7 +353,6 @@ func TestEvent(t *testing.T, newQueue func(int) interface {
 		for cDesc, c := range cases {
 			var wg sync.WaitGroup
 
-			//TODO: add documentation
 			q := newQueue(c.iSize)
 			signalIn, signalOut := q.GetSignalIn(), q.GetSignalOut()
 			start := make(chan struct{})
@@ -361,7 +360,7 @@ func TestEvent(t *testing.T, newQueue func(int) interface {
 			go func() {
 				defer wg.Done()
 				<-start
-				overflow := q.Enqueue(struct{}{})
+				overflow := q.Enqueue(&goqueue.Example{})
 				assert.False(t, overflow, casef, cDesc)
 			}()
 			go func() {
@@ -433,16 +432,15 @@ func TestLength(t *testing.T, newQueue func(int) interface {
 			},
 		}
 		for cDesc, c := range cases {
-			//TODO: add documentation
 			q := newQueue(c.iSize)
-			overflow := q.Enqueue(struct{}{})
+			overflow := q.Enqueue(&goqueue.Example{})
 			assert.False(t, overflow, casef, cDesc)
 			assert.Equal(t, 1, q.Length(), casef, cDesc)
 			_, underflow := q.Dequeue()
 			assert.False(t, underflow, casef, cDesc)
 			assert.Equal(t, 0, q.Length(), casef, cDesc)
 			for i := 0; i < c.iSize; i++ {
-				overflow := q.Enqueue(struct{}{})
+				overflow := q.Enqueue(&goqueue.Example{})
 				assert.False(t, overflow, casef, cDesc)
 			}
 			assert.Equal(t, c.iSize, q.Length(), casef, cDesc)
@@ -456,6 +454,14 @@ func TestLength(t *testing.T, newQueue func(int) interface {
 	}
 }
 
+//TestQueue
+// 1. Use the New() function to create/populate a queue of the size for the case
+// 2. Use the Length() function to verify that the queue is empty (size of 0)
+// 3. Use the Enqueue() function for the number of itemsIn to place data in the queue and verify that
+//  the length increases by one each time.
+// 4. Use the Length() to check to see if the queue is the expected size
+// 5. Use the Dequeue() Function again to verify an underflow as the queue should now be empty (length of 0)
+// 6. Use the Close() function to clean up all internal pointers for the queue
 func TestQueue(t *testing.T, newQueue func(int) interface {
 	goqueue.Owner
 	goqueue.Enqueuer
@@ -483,13 +489,6 @@ func TestQueue(t *testing.T, newQueue func(int) interface {
 			},
 		}
 		for cDesc, c := range cases {
-			// 1. Use the New() function to create/populate a queue of the size for the case
-			// 2. Use the Length() function to verify that the queue is empty (size of 0)
-			// 3. Use the Enqueue() function for the number of itemsIn to place data in the queue and verify that
-			//  the length increases by one each time.
-			// 4. Use the Length() to check to see if the queue is the expected size
-			// 5. Use the Dequeue() Function again to verify an underflow as the queue should now be empty (length of 0)
-			// 6. Use the Close() function to clean up all internal pointers for the queue
 			q := newQueue(c.iSize)
 			assert.Equal(t, 0, q.Length(), casef, cDesc)
 			for _, item := range c.iFloats {
@@ -510,6 +509,16 @@ func TestQueue(t *testing.T, newQueue func(int) interface {
 	}
 }
 
+//TestAsync
+// 1. Populate async interface using New()
+// 2. Create two goRoutines:
+//   a. goRoutine (dequeue):
+//    (2) Stop when signal received after enqueue function is finished enqueing data
+//    (1) Constantly attempt to dequeue, when underflow is false, add item to slice of float64
+//   b. goRoutine (enqueue):
+//    (1) Enqueue all the data from randFloats, store data in queue
+//    (2) Send signal when finished enqueuing data
+// 3. Compare the items dequeued to the items enqueued, they should be equal although their quantity may not be the same (see verification)
 func TestAsync(t *testing.T, newQueue func(int) interface {
 	goqueue.Owner
 	goqueue.Enqueuer
@@ -532,20 +541,10 @@ func TestAsync(t *testing.T, newQueue func(int) interface {
 			var valuesEnqueued, valuesDequeued []*goqueue.Example
 			var wg sync.WaitGroup
 
-			//1. Populate async interface using New()
-			//2. Create two goRoutines:
-			//a. goRoutine (dequeue):
-			//(2) Stop when signal received after enqueue function is finished enqueing data
-			//(1) Constantly attempt to dequeue, when underflow is false, add item to slice of float64
-			//b. goRoutine (enqueue):
-			//(1) Enqueue all the data from randFloats, store data in queue
-			//(2) Send signal when finished enqueuing data
-			//5. Compare the items dequeued to the items enqueued, they should be equal although their quantity may not be the same (see verification)
-
 			q := newQueue(c.Size)
 			stopDequeue := make(chan (struct{}))
 			wg.Add(1)
-			go func() { //dequeue
+			go func() {
 				defer wg.Done()
 
 				for {
@@ -560,7 +559,7 @@ func TestAsync(t *testing.T, newQueue func(int) interface {
 				}
 			}()
 			wg.Add(1)
-			go func() { //enqueue
+			go func() {
 				defer wg.Done()
 
 				for _, item := range c.Floats {

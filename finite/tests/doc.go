@@ -3,6 +3,6 @@
 // license that can be found in the LICENSE file.
 
 /*
-	Package finite provides a test suite for finite queues
+	Package finite_tests provides a test suite for finite queues
 */
 package finite_tests

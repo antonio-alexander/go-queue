@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 /*
-	Package finite provides common types and functions used by a infinite queue
+	Package infinite provides common types and functions used by a infinite queue
 	implementation
 */
 package infinite

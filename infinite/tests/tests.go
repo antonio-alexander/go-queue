@@ -28,19 +28,12 @@ func TestNew(t *testing.T, newQueue func(int) interface {
 				oCapacity: 1,
 			},
 		}
-		// for cDesc, c := range cases {
-		for range cases {
-			//TODO: add test case
-			//create the queue using the newQueue function, assert
-			// that it is not nil and validate that the capacity is
-			// as expected, then close the queue
-			// q := newQueue(c.iSize)
-			// if assert.NotNil(t, q) {
-			// 	if capacity := q.Capacity(); capacity != c.oCapacity {
-			// 		assert.Equal(t, c.oCapacity, casef, cDesc)
-			// 	}
-			// 	q.Close()
-			// }
+		for cDesc, c := range cases {
+			q := newQueue(c.iSize)
+			if !assert.NotNil(t, q, cDesc) {
+				continue
+			}
+			q.Close()
 		}
 	}
 }
