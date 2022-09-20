@@ -5,80 +5,77 @@ import (
 	"testing"
 	"time"
 
-	goqueue "github.com/antonio-alexander/go-queue"
 	infinite "github.com/antonio-alexander/go-queue/infinite"
 	infinite_tests "github.com/antonio-alexander/go-queue/infinite/tests"
+
+	goqueue "github.com/antonio-alexander/go-queue"
 	goqueue_tests "github.com/antonio-alexander/go-queue/tests"
+)
+
+const (
+	queueGrowSize = 1024
+	mustTimeout   = time.Second
+	mustRate      = time.Millisecond
 )
 
 func init() {
 	rand.Seed(int64(time.Now().Nanosecond()))
 }
 
+//TODO: test the growing of the internal slice
+
 func TestInfiniteQueue(t *testing.T) {
-	t.Run("Test New", infinite_tests.TestNew(t, func(size int) interface {
-		goqueue.Owner
-		goqueue.Length
-	} {
-		return infinite.New(size)
-	}))
-	t.Run("Test Garbage Collect", goqueue_tests.TestGarbageCollect(t, func(size int) interface {
-		goqueue.Owner
-		goqueue.GarbageCollecter
-		goqueue.Enqueuer
+	t.Run("Test Enqueue", infinite_tests.TestEnqueue(t, mustRate, mustTimeout, func() interface {
 		goqueue.Dequeuer
-	} {
-		return infinite.New(size)
-	}))
-	t.Run("Test Garbage Collect Infinite", infinite_tests.TestGarbageCollect(t, func(size int) interface {
-		goqueue.Owner
-		goqueue.GarbageCollecter
 		goqueue.Enqueuer
+		goqueue.Owner
+	} {
+		return infinite.New(queueGrowSize)
+	}))
+	t.Run("Enqueue Multiple", infinite_tests.TestEnqueueMultiple(t, mustRate, mustTimeout, func() interface {
 		goqueue.Dequeuer
-	} {
-		return infinite.New(size)
-	}))
-	t.Run("Test Dequeue", goqueue_tests.TestDequeue(t, func(size int) interface {
-		goqueue.Owner
 		goqueue.Enqueuer
+		goqueue.Owner
+	} {
+		return infinite.New(queueGrowSize)
+	}))
+	t.Run("Test Enqueue In Front", infinite_tests.TestEnqueueInFront(t, mustRate, mustTimeout, func() interface {
 		goqueue.Dequeuer
-		goqueue.Length
-	} {
-		return infinite.New(size)
-	}))
-	t.Run("Test Dequeue Multiple", goqueue_tests.TestDequeueMultiple(t, func(size int) interface {
-		goqueue.Owner
-		goqueue.Enqueuer
-		goqueue.Dequeuer
-	} {
-		return infinite.New(size)
-	}))
-	t.Run("Test Flush", goqueue_tests.TestFlush(t, func(size int) interface {
-		goqueue.Owner
-		goqueue.Enqueuer
-		goqueue.Dequeuer
-	} {
-		return infinite.New(size)
-	}))
-	t.Run("Test Enqueue", infinite_tests.TestEnqueue(t, func(size int) interface {
-		goqueue.Owner
-		goqueue.Enqueuer
-		goqueue.Length
-	} {
-		return infinite.New(size)
-	}))
-	t.Run("Enqueue Multiple", infinite_tests.TestEnqueueMultiple(t, func(size int) interface {
-		goqueue.Owner
-		goqueue.Enqueuer
-		goqueue.Length
-	} {
-		return infinite.New(size)
-	}))
-	t.Run("Test Enqueue In Front", infinite_tests.TestEnqueueInFront(t, func(size int) interface {
-		goqueue.Owner
-		goqueue.Enqueuer
 		goqueue.EnqueueInFronter
-		goqueue.Peeker
+		goqueue.Enqueuer
+		goqueue.Owner
+	} {
+		return infinite.New(queueGrowSize)
+	}))
+}
+
+func TestQueue(t *testing.T) {
+	t.Run("Test Garbage Collect", goqueue_tests.TestGarbageCollect(t, mustRate, mustTimeout, func(size int) interface {
+		goqueue.Owner
+		goqueue.GarbageCollecter
+		goqueue.Enqueuer
+		goqueue.Dequeuer
+	} {
+		return infinite.New(size)
+	}))
+	t.Run("Test Dequeue", goqueue_tests.TestDequeue(t, mustRate, mustTimeout, func(size int) interface {
+		goqueue.Owner
+		goqueue.Enqueuer
+		goqueue.Dequeuer
+	} {
+		return infinite.New(size)
+	}))
+	t.Run("Test Dequeue Multiple", goqueue_tests.TestDequeueMultiple(t, mustRate, mustTimeout, func(size int) interface {
+		goqueue.Owner
+		goqueue.Enqueuer
+		goqueue.Dequeuer
+	} {
+		return infinite.New(size)
+	}))
+	t.Run("Test Flush", goqueue_tests.TestFlush(t, mustRate, mustTimeout, func(size int) interface {
+		goqueue.Owner
+		goqueue.Enqueuer
+		goqueue.Dequeuer
 	} {
 		return infinite.New(size)
 	}))
@@ -117,19 +114,10 @@ func TestInfiniteQueue(t *testing.T) {
 	} {
 		return infinite.New(size)
 	}))
-	t.Run("Test Queue", goqueue_tests.TestQueue(t, func(size int) interface {
+	t.Run("Test Queue", goqueue_tests.TestQueue(t, mustRate, mustTimeout, func(size int) interface {
 		goqueue.Owner
 		goqueue.Enqueuer
 		goqueue.Dequeuer
-		goqueue.Length
-	} {
-		return infinite.New(size)
-	}))
-	t.Run("Test Queue Infinite", infinite_tests.TestQueue(t, func(size int) interface {
-		goqueue.Owner
-		goqueue.Enqueuer
-		goqueue.Dequeuer
-		goqueue.Length
 	} {
 		return infinite.New(size)
 	}))
@@ -137,7 +125,6 @@ func TestInfiniteQueue(t *testing.T) {
 		goqueue.Owner
 		goqueue.Enqueuer
 		goqueue.Dequeuer
-		goqueue.Length
 	} {
 		return infinite.New(size)
 	}))

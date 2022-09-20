@@ -1,7 +1,7 @@
 {
     "go.lintTool": "golangci-lint",
     "go.testFlags": [
-        "-v",
-        "-coverpkg=github.com/antonio-alexander/go-queue,github.com/antonio-alexander/go-queue/infinite,github.com/antonio-alexander/go-queue/finite,github.com/antonio-alexander/go-queue/internal"
+        "-v"
+        // "-coverpkg=github.com/antonio-alexander/go-queue,github.com/antonio-alexander/go-queue/infinite,github.com/antonio-alexander/go-queue/finite,github.com/antonio-alexander/go-queue/internal"
     ]
 }

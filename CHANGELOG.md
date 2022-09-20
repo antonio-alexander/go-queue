@@ -5,6 +5,13 @@ All notable changes to this service will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.2] - 09/10/22
+
+- Added "Must" functions that will block until success
+- Refactored the inifinite tests to reflect the expected behavior and to be less specific to MY implementation of the infinite queue
+- Refactored the goqueue/finite tests to use the MUST functions, still need to do the Peek functions, but otherwise complete
+- Updated close function(s) to handle nil/closed channels
+
 ## [1.2.1] - 05/01/22
 
 - Updated remaining tests where the Example data wasn't used

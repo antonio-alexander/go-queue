@@ -1,7 +1,9 @@
 package infinite_tests
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	goqueue "github.com/antonio-alexander/go-queue"
 
@@ -10,273 +12,286 @@ import (
 
 const casef string = "case: %s"
 
-func TestNew(t *testing.T, newQueue func(int) interface {
+//TestEnqueue attempt to unit test the enqueue function, in general it confirms the
+// behavior, that for an infinite queue, no matter how much data you put into the
+// queue, the queue will never overflow and there will be no data loss. This test
+// also assumes that the "size" of the queue won't affect the behavior of enqueue
+// This test has some "configuration" items that can be "tweaked" for your specific
+// queue implementation:
+//  - rate: this is the rate at which the test will attempt to enqueue/dequeue
+//  - timeout: this is when the test will "give up"
+// Some assumptions this test does make:
+//  - your queue can handle valid data, as a plus the example data type supports the
+//    BinaryMarshaller
+// Some assumptions this test won't make:
+//  - order is maintained
+//  - the "size" of the queue affects the behavior of enqueue
+func TestEnqueue(t *testing.T, rate, timeout time.Duration, newQueue func() interface {
 	goqueue.Owner
-	goqueue.Length
-}) func(*testing.T) {
-	return func(t *testing.T) {
-		cases := map[string]struct {
-			iSize     int
-			oCapacity int
-		}{
-			"normal; size > 1": {
-				iSize:     10,
-				oCapacity: 10,
-			},
-			"failure; size < 0": {
-				iSize:     0,
-				oCapacity: 1,
-			},
-		}
-		for cDesc, c := range cases {
-			q := newQueue(c.iSize)
-			if !assert.NotNil(t, q, cDesc) {
-				continue
-			}
-			q.Close()
-		}
-	}
-}
-
-func TestGarbageCollect(t *testing.T, newQueue func(int) interface {
-	goqueue.Owner
-	goqueue.GarbageCollecter
 	goqueue.Enqueuer
 	goqueue.Dequeuer
 }) func(*testing.T) {
 	return func(t *testing.T) {
-		cases := map[string]struct {
-			iGrowSize   int
-			iNtoEnqueue int
-			iNtoDequeue int
-			oCapacity   int
-		}{
-			"grow + 1": {
-				iGrowSize:   5,
-				iNtoEnqueue: 9,
-				iNtoDequeue: 3,
-				oCapacity:   10,
-			},
-			"grow - 1": {
-				iGrowSize:   5,
-				iNtoEnqueue: 10,
-				iNtoDequeue: 10,
-				oCapacity:   5,
-			},
-			"grow + 0": {
-				iGrowSize:   5,
-				iNtoEnqueue: 5,
-				iNtoDequeue: 5,
-				oCapacity:   5,
-			},
+		//create the queue
+		q := newQueue()
+		defer q.Close()
+
+		//generate and enqueue the examples
+		examples := goqueue.ExampleGenFloat64()
+		for _, example := range examples {
+			ctx, cancel := context.WithTimeout(context.TODO(), timeout)
+			defer cancel()
+			overflow := goqueue.MustEnqueue(q, example, ctx.Done(), rate)
+			assert.False(t, overflow)
+			cancel()
 		}
 
-		for cDesc, c := range cases {
-			q := newQueue(c.iGrowSize)
-			for i := 0; i < c.iNtoEnqueue; i++ {
-				overflow := q.Enqueue(i)
-				assert.False(t, overflow, casef, cDesc)
+		//attempt to dequeue the examples and ensure no data loss
+		ctx, cancel := context.WithTimeout(context.TODO(), timeout)
+		defer cancel()
+		items := goqueue.MustFlush(q, ctx.Done(), rate)
+		cancel()
+		for _, item := range items {
+			example := goqueue.ExampleConvertSingle(item)
+			if !assert.NotNil(t, example) {
+				continue
 			}
-			for i := 0; i < c.iNtoDequeue; i++ {
-				element, underflow := q.Dequeue()
-				if assert.False(t, underflow, casef, cDesc) {
-					assert.Equal(t, i, element)
-				}
+			assert.Condition(t, goqueue.AssertExamples(example, examples))
+		}
+
+		//KIM: we do the same thing a second time, this would catch situations
+		// where slices or data structures aren't properly allocated or something
+		// explodes
+		//generate and enqueue the examples
+		examples = goqueue.ExampleGenFloat64()
+		for _, example := range examples {
+			ctx, cancel := context.WithTimeout(context.TODO(), timeout)
+			defer cancel()
+			overflow := goqueue.MustEnqueue(q, example, ctx.Done(), rate)
+			assert.False(t, overflow)
+			cancel()
+		}
+
+		//attempt to dequeue the examples and ensure no data loss
+		ctx, cancel = context.WithTimeout(context.TODO(), timeout)
+		defer cancel()
+		items = goqueue.MustFlush(q, ctx.Done(), rate)
+		cancel()
+		for _, example := range goqueue.ExampleConvertMultiple(items) {
+			if !assert.NotNil(t, example) {
+				continue
 			}
-			q.GarbageCollect()
-			for i := 0 + c.iNtoDequeue; i < c.iNtoEnqueue; i++ {
-				element, underflow := q.Dequeue()
-				if assert.False(t, underflow, casef, cDesc) {
-					assert.Equal(t, i, element)
-				}
-			}
-			q.Close()
+			assert.Condition(t, goqueue.AssertExamples(example, examples))
 		}
 	}
 }
 
-func TestEnqueue(t *testing.T, newQueue func(int) interface {
+//TestEnqueueMultiple will attempt to unit test the EnqueueMultiple function;
+// for an infinite queue, this function will never overflow nor will it return
+// items that weren't able to be enqueued.
+// This test has some "configuration" items that can be "tweaked" for your specific
+// queue implementation:
+//  - rate: this is the rate at which the test will attempt to enqueue/dequeue
+//  - timeout: this is when the test will "give up"
+// Some assumptions this test does make:
+//  - your queue can handle valid data, as a plus the example data type supports the
+//    BinaryMarshaller
+// Some assumptions this test won't make:
+//  - order is maintained
+//  - the "size" of the queue affects the behavior of enqueue
+func TestEnqueueMultiple(t *testing.T, rate, timeout time.Duration, newQueue func() interface {
 	goqueue.Owner
 	goqueue.Enqueuer
-	goqueue.Length
+	goqueue.Dequeuer
 }) func(*testing.T) {
 	return func(t *testing.T) {
-		cases := map[string]struct {
-			iGrowSize int
-			iValues   []*goqueue.Example
-			oLengths  []int
-		}{
-			"No Grow": {
-				iGrowSize: 10,
-				iValues:   []*goqueue.Example{{Int: 1}, {Int: 2}, {Int: 3}},
-				oLengths:  []int{1, 2, 3},
-			},
-			"grow once": {
-				iGrowSize: 2,
-				iValues:   []*goqueue.Example{{Int: 1}, {Int: 2}, {Int: 3}},
-				oLengths:  []int{1, 2, 3},
-			},
-			"grow twice": {
-				iGrowSize: 2,
-				iValues:   []*goqueue.Example{{Int: 1}, {Int: 2}, {Int: 3}, {Int: 4}, {Int: 5}, {Int: 6}},
-				oLengths:  []int{1, 2, 3, 4, 5, 6},
-			},
+		//create the queue
+		q := newQueue()
+		defer q.Close()
+
+		//generate and enqueue the examples
+		examples := goqueue.ExampleGenFloat64()
+		items := make([]interface{}, 0, len(examples))
+		for _, example := range examples {
+			items = append(items, example)
 		}
-		for cDesc, c := range cases {
-			q := newQueue(c.iGrowSize)
-			for i, value := range c.iValues {
-				overflow := q.Enqueue(value)
-				assert.False(t, overflow, casef, cDesc)
-				assert.Equal(t, c.oLengths[i], q.Length())
+		ctx, cancel := context.WithTimeout(context.TODO(), timeout)
+		defer cancel()
+		items, overflow := goqueue.MustEnqueueMultiple(q, items, ctx.Done(), rate)
+		assert.False(t, overflow)
+		assert.Empty(t, items)
+		cancel()
+
+		//attempt to dequeue the examples and ensure no data loss
+		ctx, cancel = context.WithTimeout(context.TODO(), timeout)
+		defer cancel()
+		items = goqueue.MustFlush(q, ctx.Done(), rate)
+		cancel()
+		for _, example := range goqueue.ExampleConvertMultiple(items) {
+			if !assert.NotNil(t, example) {
+				continue
 			}
-			q.Close()
+			assert.Condition(t, goqueue.AssertExamples(example, examples))
+		}
+		//KIM: we do the same thing a second time, this would catch situations
+		// where slices or data structures aren't properly allocated or something
+		// explodes
+		examples = goqueue.ExampleGenFloat64()
+		items = make([]interface{}, 0, len(examples))
+		for _, example := range examples {
+			items = append(items, example)
+		}
+		ctx, cancel = context.WithTimeout(context.TODO(), timeout)
+		defer cancel()
+		items, overflow = goqueue.MustEnqueueMultiple(q, items, ctx.Done(), rate)
+		assert.False(t, overflow)
+		assert.Empty(t, items)
+		cancel()
+
+		//attempt to dequeue the examples and ensure no data loss
+		ctx, cancel = context.WithTimeout(context.TODO(), timeout)
+		defer cancel()
+		items = goqueue.MustFlush(q, ctx.Done(), rate)
+		cancel()
+		for _, example := range goqueue.ExampleConvertMultiple(items) {
+			if !assert.NotNil(t, example) {
+				continue
+			}
+			assert.Condition(t, goqueue.AssertExamples(example, examples))
 		}
 	}
 }
 
-func TestEnqueueMultiple(t *testing.T, newQueue func(int) interface {
-	goqueue.Owner
-	goqueue.Enqueuer
-	goqueue.Length
-}) func(*testing.T) {
-	return func(t *testing.T) {
-		cases := map[string]struct {
-			iGrowSize int
-			iValues   []*goqueue.Example
-			oLength   int
-		}{
-			"No Grow": {
-				iGrowSize: 10,
-				iValues:   []*goqueue.Example{{Int: 1}, {Int: 2}, {Int: 3}},
-				oLength:   3,
-			},
-			"grow once": {
-				iGrowSize: 2,
-				iValues:   []*goqueue.Example{{Int: 1}, {Int: 2}, {Int: 3}},
-				oLength:   3,
-			},
-			"grow twice": {
-				iGrowSize: 2,
-				iValues:   []*goqueue.Example{{Int: 1}, {Int: 2}, {Int: 3}, {Int: 4}, {Int: 5}, {Int: 6}},
-				oLength:   6,
-			},
-		}
-		for cDesc, c := range cases {
-			q := newQueue(c.iGrowSize)
-			remainingElements, overflow := goqueue.ExampleEnqueueMultiple(q, c.iValues)
-			if assert.False(t, overflow, casef, cDesc) &&
-				assert.GreaterOrEqual(t, len(remainingElements), 0) {
-				length := q.Length()
-				assert.Equal(t, c.oLength, length, casef, cDesc)
-			}
-			q.Close()
-		}
-	}
-}
-
-func TestEnqueueInFront(t *testing.T, newQueue func(int) interface {
+//TestEnqueueInFront will validate that if there is data in the queue and you attempt to
+// enqueue in front, that special "data" will go to the front, while if the queue is empty
+// that data will just be "in" the queue (a regular queue if the queue is empty).
+// This test has some "configuration" items that can be "tweaked" for your specific
+// queue implementation:
+//  - rate: this is the rate at which the test will attempt to enqueue/dequeue
+//  - timeout: this is when the test will "give up"
+// Some assumptions this test does make:
+//  - your queue can handle valid data, as a plus the example data type supports the
+//    BinaryMarshaller
+//  - your queue maintains order
+//  - it's safe to use a single instance of your queue for each test case
+// Some assumptions this test won't make:
+//  - the "size" of the queue affects the behavior of enqueue
+func TestEnqueueInFront(t *testing.T, rate, timeout time.Duration, newQueue func() interface {
 	goqueue.Owner
 	goqueue.Enqueuer
 	goqueue.EnqueueInFronter
-	goqueue.Peeker
+	goqueue.Dequeuer
 }) func(*testing.T) {
 	return func(t *testing.T) {
+		//verify that eif doesn't overflow if queue is not full
+		//verify that eif doesn't overflow if queue is empty
+
 		cases := map[string]struct {
-			iSize         int
+			iValues       []interface{}
 			iInFrontValue *goqueue.Example
-			iInts         []*goqueue.Example
 		}{
-			"empty_queue": { //verify that eif doesn't overflow if queue is empty
-				iSize:         5,
+			"empty_queue": {
 				iInFrontValue: &goqueue.Example{Int: 10},
 			},
-			"queue_not_full": { //verify that eif doesn't overflow if queue is not full
-				iSize:         5,
-				iInts:         []*goqueue.Example{{Int: 1}, {Int: 2}, {Int: 3}, {Int: 4}},
+			"queue_not_full": {
+				iValues: []interface{}{
+					&goqueue.Example{Int: 1},
+					&goqueue.Example{Int: 2},
+					&goqueue.Example{Int: 3},
+					&goqueue.Example{Int: 4},
+				},
 				iInFrontValue: &goqueue.Example{Int: 10},
-			},
-			"queue_full": { //verify that eif overflows if queue is full
-				iSize:         5,
-				iInts:         []*goqueue.Example{{Int: 1}, {Int: 2}, {Int: 3}, {Int: 4}, {Int: 5}},
-				iInFrontValue: &goqueue.Example{Int: 88},
-			},
-			"almost_full": { //verify that eif places data in front if you enqueue one element
-				iSize:         5,
-				iInts:         []*goqueue.Example{{Int: 1}},
-				iInFrontValue: &goqueue.Example{Int: 66},
-			},
-			"max-1": { //verify that eif places data in front if you enqueue max -1 number of elements
-				iSize:         5,
-				iInts:         []*goqueue.Example{{Int: 1}, {Int: 2}, {Int: 3}, {Int: 4}},
-				iInFrontValue: &goqueue.Example{Int: 44},
 			},
 		}
+		q := newQueue()
+		defer q.Close()
 		for cDesc, c := range cases {
-			q := newQueue(c.iSize)
-			for _, element := range c.iInts {
-				overflow := q.Enqueue(element)
-				assert.False(t, overflow, casef, cDesc)
-			}
-			overflow := q.EnqueueInFront(c.iInFrontValue)
-			if assert.False(t, overflow, casef, cDesc) {
-				element, underflow := q.PeekHead()
-				if assert.False(t, underflow, casef, cDesc) {
-					assert.Equal(t, c.iInFrontValue, element, casef, cDesc)
-				}
-			}
-			q.Close()
+			//enqueue values
+			ctx, cancel := context.WithTimeout(context.TODO(), timeout)
+			defer cancel()
+			items, overflow := goqueue.MustEnqueueMultiple(q, c.iValues, ctx.Done(), rate)
+			cancel()
+			assert.False(t, overflow, casef, cDesc)
+			assert.Empty(t, items, casef, cDesc)
+
+			//attempt to enqueue value in front
+			overflow = q.EnqueueInFront(c.iInFrontValue)
+			assert.False(t, overflow, casef, cDesc)
+
+			//validate that next dequeued value is value enqueued in front
+			ctx, cancel = context.WithTimeout(context.TODO(), timeout)
+			defer cancel()
+			item, underflow := goqueue.MustDequeue(q, ctx.Done(), rate)
+			cancel()
+			assert.False(t, underflow)
+			assert.IsType(t, &goqueue.Example{}, item, casef, cDesc)
+			example, _ := item.(*goqueue.Example)
+			assert.Equal(t, c.iInFrontValue, example, casef, cDesc)
+
+			//flush the queue to empty it
+			ctx, cancel = context.WithTimeout(context.TODO(), timeout)
+			defer cancel()
+			goqueue.MustDequeueMultiple(q, ctx.Done(), len(c.iValues), rate)
+			cancel()
 		}
+		q.Close()
 	}
 }
 
-func TestQueue(t *testing.T, newQueue func(int) interface {
+//TestEnqueueEvent will confirm that the signal channels function correctly when data is enqueued,
+// this function for an infinite queue is slightly different because it can't be lossless, there's
+// no way to properly implement a buffered channel with an infinite queue
+// Some assumptions this test does make:
+func TestEnqueueEvent(t *testing.T, rate, timeout time.Duration, newQueue func() interface {
 	goqueue.Owner
 	goqueue.Enqueuer
-	goqueue.Dequeuer
-	goqueue.Length
+	goqueue.Event
 }) func(*testing.T) {
 	return func(t *testing.T) {
-		randFloats := goqueue.ExampleGenFloat64(0)
-		cases := map[string]struct {
-			iSize   int
-			iValues []*goqueue.Example
-		}{
-			"Ticker": { //test with ticker
-				iSize:   len(randFloats),
-				iValues: randFloats,
-			},
+		//create queue
+		q := newQueue()
+		defer q.Close()
+		signalIn := q.GetSignalIn()
+
+		//generate examples, enqueue and verify signals, we're going to test
+		// a singal per enqueue
+		examples := goqueue.ExampleGenFloat64()
+		for _, example := range examples {
+			ctx, cancel := context.WithTimeout(context.TODO(), timeout)
+			defer cancel()
+			overflow := goqueue.MustEnqueue(q, example, ctx.Done(), rate)
+			assert.False(t, overflow)
+			cancel()
+			select {
+			default:
+				assert.Fail(t, "expected signal not received")
+				continue
+			case <-signalIn:
+				//KIM: this tests makes an assumption that the signal is
+				// synchronously sent after a successful enqueue
+			}
 		}
 
-		for cDesc, c := range cases {
-			//1. Use the New() function to create/populate a queue of the size for the case
-			q := newQueue(c.iSize)
-			for i := 0; i < len(c.iValues)-1; i++ {
-				//2. Use the Enqueue() function for the number of elementsIn to place data in the queue and verify that the length increases by one each time.
-				overflow := q.Enqueue(c.iValues[i])
-				assert.False(t, overflow, casef, cDesc)
-			}
-			assert.Equal(t, q.Length(), len(c.iValues)-1)
-			//3. Use the Enqueue() function again to verify that the queue doesn't overflow and that the capacity increases (capacity after enqueue is greater than the capacity before)
-			overflow := q.Enqueue(c.iValues[len(c.iValues)-1])
-			assert.False(t, overflow, casef, cDesc)
-			assert.Equal(t, len(c.iValues), q.Length())
-			for i := 0; i < c.iSize; i++ {
-				//4. Use the Dequeue() function for the number of elementsIn to remove data from the queue adn verify that the length decreases by one each time.
-				value, underflow := goqueue.ExampleDequeue(q)
-				if assert.False(t, underflow, casef, cDesc) {
-					assert.Equal(t, c.iValues[i], value)
-				}
-			}
-			//5. Use the Dequeue() Function again to verify an underflow as the queue should now be empty (length of 0)
-			_, underflow := q.Dequeue()
-			assert.True(t, underflow, casef, cDesc)
-			//6. Use the Close() function to clean up all internal pointers for the queue
-			q.Close()
+		//attempt to enqueue multiple items and see that you get at least one
+		// signal
+		items := make([]interface{}, 0, len(examples))
+		for _, example := range examples {
+			items = append(items, example)
 		}
+		ctx, cancel := context.WithTimeout(context.TODO(), timeout)
+		defer cancel()
+		items, overflow := goqueue.MustEnqueueMultiple(q, items, ctx.Done(), rate)
+		assert.False(t, overflow)
+		assert.Empty(t, items)
+		cancel()
+		select {
+		default:
+			assert.Fail(t, "expected signal in not received")
+		case <-signalIn:
+			//KIM: this assumes that at least one signal is received
+		}
+
+		//close the queue
+		q.Close()
 	}
 }
-
-//REVIEW: implement tests for sanity/security checks
-// * When using dequeue methods that output slices, can we ensure we don't accidentally leak the
-//   underlying slice? This should be possible using runtime garbage collection and total/allocated
-//   heap memory.

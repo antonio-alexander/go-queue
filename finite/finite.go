@@ -43,8 +43,20 @@ func (q *queueFinite) Close() (remainingElements []interface{}) {
 	defer q.Unlock()
 
 	remainingElements, q.data, _ = internal.DequeueMultiple(cap(q.data), q.data)
-	close(q.signalIn)
-	close(q.signalOut)
+	if q.signalIn != nil {
+		select {
+		default:
+			close(q.signalIn)
+		case <-q.signalIn:
+		}
+	}
+	if q.signalOut != nil {
+		select {
+		default:
+			close(q.signalOut)
+		case <-q.signalOut:
+		}
+	}
 	q.data, q.signalIn, q.signalOut = nil, nil, nil
 
 	return
@@ -80,8 +92,20 @@ func (q *queueFinite) Resize(newSize int) (items []interface{}) {
 	}
 	data := make([]interface{}, len(q.data), newSize)
 	copy(data, q.data[:len(q.data)])
-	close(q.signalIn)
-	close(q.signalOut)
+	if q.signalIn != nil {
+		select {
+		default:
+			close(q.signalIn)
+		case <-q.signalIn:
+		}
+	}
+	if q.signalOut != nil {
+		select {
+		default:
+			close(q.signalOut)
+		case <-q.signalOut:
+		}
+	}
 	q.data = data
 	q.signalIn = make(chan struct{}, newSize)
 	q.signalOut = make(chan struct{}, newSize)

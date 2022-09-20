@@ -1,6 +1,8 @@
 package goqueue
 
-import "encoding"
+import (
+	"encoding"
+)
 
 //These types are specifically provided to attempt to communicate support
 // for how queues would be able to store data in a persistent way no matter

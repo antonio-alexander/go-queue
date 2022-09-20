@@ -2,9 +2,23 @@ package goqueue
 
 import (
 	"encoding/json"
-	"fmt"
 	"math/rand"
+	"reflect"
 )
+
+//REFERENCE: https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-go
+func randomString(nLetters ...int) string {
+	letterRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	nLetter := 20
+	if len(nLetters) > 0 {
+		nLetter = nLetters[0]
+	}
+	b := make([]rune, nLetter)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
+}
 
 type Example struct {
 	Int    int     `json:"int,omitempty"`
@@ -23,21 +37,18 @@ func (v *Example) UnmarshalBinary(bytes []byte) error {
 func ExampleConvertSingle(item interface{}) *Example {
 	switch v := item.(type) {
 	default:
-		fmt.Printf("Arf! Arf! unsupported type: %T", v)
 		return nil
 	case *Example:
 		return v
 	case Bytes:
 		data := &Example{}
 		if err := data.UnmarshalBinary(v); err != nil {
-			fmt.Printf("Arf! Arf! failure unmarshalling data: %s", err)
 			return nil
 		}
 		return data
 	case []byte:
 		data := &Example{}
 		if err := data.UnmarshalBinary(v); err != nil {
-			fmt.Printf("Arf! Arf! failure unmarshalling data: %s", err)
 			return nil
 		}
 		return data
@@ -100,24 +111,74 @@ func ExampleDequeue(queue Dequeuer) (*Example, bool) {
 }
 
 func ExampleDequeueMultiple(queue Dequeuer, n int) []*Example {
-	items := queue.DequeueMultiple(n)
-	return ExampleConvertMultiple(items)
+	return ExampleConvertMultiple(queue.DequeueMultiple(n))
 }
 
 func ExampleFlush(queue Dequeuer) []*Example {
-	items := queue.Flush()
-	return ExampleConvertMultiple(items)
+	return ExampleConvertMultiple(queue.Flush())
 }
 
 //ExampleGenFloat64 will generate a random number of random float values if n is equal to 0
 // not to exceed the constant TestMaxExamples, if n is provided, it will generate that many items
-func ExampleGenFloat64(n int) []*Example {
-	if n <= 0 {
-		n = int(rand.Float64() * 1000)
+func ExampleGenFloat64(sizes ...int) []*Example {
+	size := int(rand.Float64() * 100)
+	if len(sizes) > 0 {
+		size = sizes[0]
 	}
-	values := make([]*Example, 0, n)
-	for i := 0; i < n; i++ {
+	values := make([]*Example, 0, size)
+	for i := 0; i < size; i++ {
 		values = append(values, &Example{Float: rand.Float64()})
 	}
 	return values
+}
+
+func ExampleGenInt(sizes ...int) []*Example {
+	size := int(rand.Float64() * 100)
+	if len(sizes) > 0 {
+		size = sizes[0]
+	}
+	values := make([]*Example, 0, size)
+	for i := 0; i < size; i++ {
+		values = append(values, &Example{Int: rand.Int()})
+	}
+	return values
+}
+
+func ExampleGenString(sizes ...int) []*Example {
+	size := int(rand.Float64() * 100)
+	if len(sizes) > 0 {
+		size = sizes[0]
+	}
+	values := make([]*Example, 0, size)
+	for i := 0; i < size; i++ {
+		values = append(values, &Example{String: randomString()})
+	}
+	return values
+}
+
+func ExampleGen(sizes ...int) []*Example {
+	size := int(rand.Float64() * 100)
+	if len(sizes) > 0 {
+		size = sizes[0]
+	}
+	values := make([]*Example, 0, size)
+	for i := 0; i < size; i++ {
+		values = append(values, &Example{
+			Int:    rand.Int(),
+			Float:  rand.Float64(),
+			String: randomString(),
+		})
+	}
+	return values
+}
+
+func AssertExamples(example *Example, examples []*Example) func() bool {
+	return func() bool {
+		for _, e := range examples {
+			if reflect.DeepEqual(*e, *example) {
+				return true
+			}
+		}
+		return false
+	}
 }
