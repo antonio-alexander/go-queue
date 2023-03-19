@@ -37,7 +37,7 @@ func randomString(nLetters ...int) string {
 	return string(b)
 }
 
-//TestGarbageCollect attempts to validate that memory is returned to the heap and can be properly
+// TestGarbageCollect attempts to validate that memory is returned to the heap and can be properly
 // garbage collected it executes and garbage collection is manually triggered. This makes some
 // heavy underlying assumptions that a slice or map data structure. The idea behind the function
 // is that it'll re-create those data structures with new maps/slices such that that the items
@@ -92,20 +92,22 @@ func TestGarbageCollect(t *testing.T, rate, timeout time.Duration, newQueue func
 	}
 }
 
-//TestDequeue will confirm the functionality of the underflow output, with an infinite queue
+// TestDequeue will confirm the functionality of the underflow output, with an infinite queue
 // the expectation is that the enqueue will never overflow, and the dequeue will only underflow
 // if the queue is empty. Although this use case is the "same" for infinite and finite queues
 // the dequeue function is based on the behavior of the enqueue function. This test has some
 // "configuration" items that can be "tweaked" for your specific queue implementation:
-//  - rate: this is the rate at which the test will attempt to enqueue/dequeue
-//  - timeout: this is when the test will "give up"
+//   - rate: this is the rate at which the test will attempt to enqueue/dequeue
+//   - timeout: this is when the test will "give up"
+//
 // Some assumptions this test does make:
-//  - your queue can handle valid data, as a plus the example data type supports the
-//    BinaryMarshaller
-//  - your queue maintains order
-//  - it's safe to use a single instance of your queue for each test case
+//   - your queue can handle valid data, as a plus the example data type supports the
+//     BinaryMarshaller
+//   - your queue maintains order
+//   - it's safe to use a single instance of your queue for each test case
+//
 // Some assumptions this test won't make:
-//  - the "size" of the queue affects the behavior of enqueue
+//   - the "size" of the queue affects the behavior of enqueue
 func TestDequeue(t *testing.T, rate, timeout time.Duration, newQueue func(size int) interface {
 	goqueue.Owner
 	goqueue.Enqueuer
@@ -126,11 +128,10 @@ func TestDequeue(t *testing.T, rate, timeout time.Duration, newQueue func(size i
 		//attempt to dequeue (confirm underflow)
 		ctx, cancel := context.WithTimeout(context.TODO(), timeout)
 		defer cancel()
-		//KIM: we don't confirm that the item is nil because it's
-		// inconsequential to this test
-		_, underflow := goqueue.MustDequeue(q, ctx.Done(), rate)
+		item, underflow := goqueue.MustDequeue(q, ctx.Done(), rate)
 		cancel()
 		assert.True(t, underflow)
+		assert.Nil(t, item)
 
 		//enqueue items
 		ctx, cancel = context.WithTimeout(context.TODO(), timeout)
@@ -143,7 +144,6 @@ func TestDequeue(t *testing.T, rate, timeout time.Duration, newQueue func(size i
 			ctx, cancel = context.WithTimeout(context.TODO(), timeout)
 			defer cancel()
 			item, underflow := goqueue.MustDequeue(q, ctx.Done(), rate)
-			cancel()
 			assert.False(t, underflow)
 			example := goqueue.ExampleConvertSingle(item)
 			assert.Equal(t, examples[i], example)
@@ -447,6 +447,12 @@ func TestPeekFromHead(t *testing.T, newQueue func(int) interface {
 				iExamples:     []*goqueue.Example{{Int: 1}, {Int: 2}, {Int: 3}, {Int: 4}, {Int: 5}},
 				iPeekFromHead: 0,
 			},
+			"max-1": {
+				iSize:           5,
+				iExamples:       []*goqueue.Example{{Int: 1}, {Int: 2}, {Int: 3}, {Int: 4}, {Int: 5}},
+				iPeekFromHead:   4,
+				oPeekedExamples: []*goqueue.Example{{Int: 1}, {Int: 2}, {Int: 3}, {Int: 4}},
+			},
 			"max+1": {
 				iSize:           5,
 				iExamples:       []*goqueue.Example{{Int: 1}, {Int: 2}, {Int: 3}, {Int: 4}, {Int: 5}},
@@ -465,7 +471,7 @@ func TestPeekFromHead(t *testing.T, newQueue func(int) interface {
 				assert.False(t, overflow, casef, cDesc)
 			}
 			values := goqueue.ExamplePeekFromHead(q, c.iPeekFromHead)
-			if assert.Equal(t, len(values), len(c.oPeekedExamples), casef, cDesc) {
+			if assert.Equal(t, len(c.oPeekedExamples), len(values), casef, cDesc) {
 				for i, item := range values {
 					assert.Equal(t, c.oPeekedExamples[i], item, casef, cDesc)
 				}
@@ -593,14 +599,14 @@ func TestLength(t *testing.T, newQueue func(int) interface {
 	}
 }
 
-//TestQueue
-// 1. Use the New() function to create/populate a queue of the size for the case
-// 2. Use the Length() function to verify that the queue is empty (size of 0)
-// 3. Use the Enqueue() function for the number of itemsIn to place data in the queue and verify that
-//  the length increases by one each time.
-// 4. Use the Length() to check to see if the queue is the expected size
-// 5. Use the Dequeue() Function again to verify an underflow as the queue should now be empty (length of 0)
-// 6. Use the Close() function to clean up all internal pointers for the queue
+// TestQueue
+//  1. Use the New() function to create/populate a queue of the size for the case
+//  2. Use the Length() function to verify that the queue is empty (size of 0)
+//  3. Use the Enqueue() function for the number of itemsIn to place data in the queue and verify that
+//     the length increases by one each time.
+//  4. Use the Length() to check to see if the queue is the expected size
+//  5. Use the Dequeue() Function again to verify an underflow as the queue should now be empty (length of 0)
+//  6. Use the Close() function to clean up all internal pointers for the queue
 func TestQueue(t *testing.T, rate, timeout time.Duration, newQueue func(int) interface {
 	goqueue.Owner
 	goqueue.Enqueuer
@@ -635,9 +641,10 @@ func TestQueue(t *testing.T, rate, timeout time.Duration, newQueue func(int) int
 			for i := 0; i < len(c.iFloats); i++ {
 				ctx, cancel := context.WithTimeout(context.TODO(), timeout)
 				defer cancel()
-				value, underflow := goqueue.MustDequeue(q, ctx.Done(), rate)
+				item, underflow := goqueue.MustDequeue(q, ctx.Done(), rate)
 				cancel()
 				if assert.False(t, underflow, casef, cDesc) {
+					value := goqueue.ExampleConvertSingle(item)
 					assert.Equal(t, c.iFloats[i], value, casef, cDesc)
 				}
 			}
@@ -648,16 +655,16 @@ func TestQueue(t *testing.T, rate, timeout time.Duration, newQueue func(int) int
 	}
 }
 
-//TestAsync
-// 1. Populate async interface using New()
-// 2. Create two goRoutines:
-//   a. goRoutine (dequeue):
-//    (2) Stop when signal received after enqueue function is finished enqueing data
-//    (1) Constantly attempt to dequeue, when underflow is false, add item to slice of float64
-//   b. goRoutine (enqueue):
-//    (1) Enqueue all the data from randFloats, store data in queue
-//    (2) Send signal when finished enqueuing data
-// 3. Compare the items dequeued to the items enqueued, they should be equal although their quantity may not be the same (see verification)
+// TestAsync
+//  1. Populate async interface using New()
+//  2. Create two goRoutines:
+//     a. goRoutine (dequeue):
+//     (2) Stop when signal received after enqueue function is finished enqueing data
+//     (1) Constantly attempt to dequeue, when underflow is false, add item to slice of float64
+//     b. goRoutine (enqueue):
+//     (1) Enqueue all the data from randFloats, store data in queue
+//     (2) Send signal when finished enqueuing data
+//  3. Compare the items dequeued to the items enqueued, they should be equal although their quantity may not be the same (see verification)
 func TestAsync(t *testing.T, newQueue func(int) interface {
 	goqueue.Owner
 	goqueue.Enqueuer
