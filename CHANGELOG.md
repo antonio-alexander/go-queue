@@ -5,6 +5,10 @@ All notable changes to this service will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.2.3] - 03/19/22
+
+- Fixed the TestQueue test such that it used the example properly and would work even if the items returned was a slice of bytes
+
 ## [1.2.2] - 09/10/22
 
 - Added "Must" functions that will block until success

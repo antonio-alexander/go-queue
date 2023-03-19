@@ -6,7 +6,7 @@ import (
 	"reflect"
 )
 
-//REFERENCE: https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-go
+// REFERENCE: https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-go
 func randomString(nLetters ...int) string {
 	letterRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	nLetter := 20
@@ -21,8 +21,8 @@ func randomString(nLetters ...int) string {
 }
 
 type Example struct {
-	Int    int     `json:"int,omitempty"`
-	Float  float64 `json:"float,omitempty"`
+	Int    int     `json:"int,omitempty,string"`
+	Float  float64 `json:"float,omitempty,string"`
 	String string  `json:"string,omitempty"`
 }
 
@@ -118,7 +118,7 @@ func ExampleFlush(queue Dequeuer) []*Example {
 	return ExampleConvertMultiple(queue.Flush())
 }
 
-//ExampleGenFloat64 will generate a random number of random float values if n is equal to 0
+// ExampleGenFloat64 will generate a random number of random float values if n is equal to 0
 // not to exceed the constant TestMaxExamples, if n is provided, it will generate that many items
 func ExampleGenFloat64(sizes ...int) []*Example {
 	size := int(rand.Float64() * 100)
