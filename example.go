@@ -34,7 +34,7 @@ func (v *Example) UnmarshalBinary(bytes []byte) error {
 	return json.Unmarshal(bytes, v)
 }
 
-func ExampleConvertSingle(item interface{}) *Example {
+func ExampleConvertSingle(item any) *Example {
 	switch v := item.(type) {
 	default:
 		return nil
@@ -55,7 +55,7 @@ func ExampleConvertSingle(item interface{}) *Example {
 	}
 }
 
-func ExampleConvertMultiple(items []interface{}) []*Example {
+func ExampleConvertMultiple(items []any) []*Example {
 	values := make([]*Example, 0, len(items))
 	for _, item := range items {
 		value := ExampleConvertSingle(item)
@@ -73,7 +73,7 @@ func ExampleClose(queue Owner) []*Example {
 }
 
 func ExampleEnqueueMultiple(queue Enqueuer, values []*Example) ([]*Example, bool) {
-	items := make([]interface{}, 0, len(values))
+	items := make([]any, 0, len(values))
 	for _, value := range values {
 		items = append(items, value)
 	}
@@ -162,7 +162,7 @@ func ExampleGen(sizes ...int) []*Example {
 		size = sizes[0]
 	}
 	values := make([]*Example, 0, size)
-	for i := 0; i < size; i++ {
+	for range size {
 		values = append(values, &Example{
 			Int:    rand.Int(),
 			Float:  rand.Float64(),

@@ -46,7 +46,7 @@ Keep in mind that Resize() is destructive and will immediately invalidate any si
 
 ```go
 type Resizer interface {
-    Resize(size int) (items []interface{})
+    Resize(size int) (items []any)
 }
 ```
 
@@ -54,7 +54,7 @@ EnqueueLossy is definitely a holdover from LabVIEW, but it allows you to have a 
 
 ```go
 type EnqueueLossy interface {
-    EnqueueLossy(item interface{}) (discardedElement interface{}, discard bool)
+    EnqueueLossy(item any) (discardedElement any, discard bool)
 }
 ```
 

@@ -115,7 +115,7 @@ func TestEnqueueMultiple(t *testing.T, rate, timeout time.Duration, newQueue fun
 
 		//generate and enqueue the examples
 		examples := goqueue.ExampleGenFloat64()
-		items := make([]interface{}, 0, len(examples))
+		items := make([]any, 0, len(examples))
 		for _, example := range examples {
 			items = append(items, example)
 		}
@@ -141,7 +141,7 @@ func TestEnqueueMultiple(t *testing.T, rate, timeout time.Duration, newQueue fun
 		// where slices or data structures aren't properly allocated or something
 		// explodes
 		examples = goqueue.ExampleGenFloat64()
-		items = make([]interface{}, 0, len(examples))
+		items = make([]any, 0, len(examples))
 		for _, example := range examples {
 			items = append(items, example)
 		}
@@ -193,14 +193,14 @@ func TestEnqueueInFront(t *testing.T, rate, timeout time.Duration, newQueue func
 		//verify that eif doesn't overflow if queue is empty
 
 		cases := map[string]struct {
-			iValues       []interface{}
+			iValues       []any
 			iInFrontValue *goqueue.Example
 		}{
 			"empty_queue": {
 				iInFrontValue: &goqueue.Example{Int: 10},
 			},
 			"queue_not_full": {
-				iValues: []interface{}{
+				iValues: []any{
 					&goqueue.Example{Int: 1},
 					&goqueue.Example{Int: 2},
 					&goqueue.Example{Int: 3},
@@ -279,7 +279,7 @@ func TestEnqueueEvent(t *testing.T, rate, timeout time.Duration, newQueue func()
 
 		//attempt to enqueue multiple items and see that you get at least one
 		// signal
-		items := make([]interface{}, 0, len(examples))
+		items := make([]any, 0, len(examples))
 		for _, example := range examples {
 			items = append(items, example)
 		}

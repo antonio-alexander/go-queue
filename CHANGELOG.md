@@ -5,6 +5,13 @@ All notable changes to this service will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.3.0] - 07/03/26
+
+- upgraded to Go 1.26
+- updated styling
+- removed github workflow
+- cleaned up comments
+
 ## [1.2.3] - 03/19/22
 
 - Fixed the TestQueue test such that it used the example properly and would work even if the items returned was a slice of bytes

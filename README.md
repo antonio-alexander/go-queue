@@ -23,7 +23,7 @@ Owner, similar to GarbageCollector(), defines functions that operate on the unde
 
 ```go
 type Owner interface {
-    Close() (items []interface{})
+    Close() (items []any)
 }
 ```
 
@@ -39,9 +39,9 @@ Dequeuer can be used to destructively remove one or more items from the queue, u
 
 ```go
 type Dequeuer interface {
-    Dequeue() (item interface{}, underflow bool)
-    DequeueMultiple(n int) (items []interface{})
-    Flush() (items []interface{})
+    Dequeue() (item any, underflow bool)
+    DequeueMultiple(n int) (items []any)
+    Flush() (items []any)
 }
 ```
 
@@ -49,9 +49,9 @@ Peeker can be used to non-destructively remove one or more items from the queue.
 
 ```go
 type Peeker interface {
-    Peek() (items []interface{})
-    PeekHead() (item interface{}, underflow bool)
-    PeekFromHead(n int) (items []interface{})
+    Peek() (items []any)
+    PeekHead() (item any, underflow bool)
+    PeekFromHead(n int) (items []any)
 }
 ```
 
@@ -59,8 +59,8 @@ Enqueuer can be used to put one or more item in the queue, overflow is true if t
 
 ```go
 type Enqueuer interface {
-    Enqueue(item interface{}) (overflow bool)
-    EnqueueMultiple(items []interface{}) (itemsRemaining []interface{}, overflow bool)
+    Enqueue(item any) (overflow bool)
+    EnqueueMultiple(items []any) (itemsRemaining []any, overflow bool)
 }
 ```
 
@@ -68,7 +68,7 @@ EnqueueInFronter can be used to place a single item at teh front of the queue, i
 
 ```go
 type EnqueueInFronter interface {
-    EnqueueInFront(item interface{}) (overflow bool)
+    EnqueueInFront(item any) (overflow bool)
 }
 ```
 
@@ -161,7 +161,7 @@ Cons:
 - Has the potential to block forever, make sure that you have some way to stop it (e.g. a stopper signal channel)
 
 ```go
-var queue interface{
+var queue interface {
     goqueue.Enquerer
     goqueue.Event
 }
@@ -216,7 +216,7 @@ This is a consumer event-based pattern, where it will wait until data is placed 
 This works really well, but it has the down-side that it could miss a signal if data is produced faster than it can be consumed.
 
 ```go
-var queue interface{
+var queue interface {
     goqueue.Dequeuer
     goqueue.Event
 }
@@ -244,13 +244,13 @@ This is a high throughput design pattern; it handles the "scalar" problem by bei
 This pattern ensures that no data is lost and that you consume data faster or as fast as you produce it.
 
 ```go
-var queue interface{
+var queue interface {
     goqueue.Dequeuer
     goqueue.Event
 }
 
 signal := queue.GetSignalIn()
-consumeFx := func(items []interface{}) {
+consumeFx := func(items []any) {
     for _, item := range items {
         switch v := item.(type) {
             default:

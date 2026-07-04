@@ -71,7 +71,7 @@ func TestEnqueue(t *testing.T, rate, timeout time.Duration, newQueue func(int) i
 	}
 }
 
-//TestEnqueueEvent will confirm the behavior of the signal channel for enqueues, it will
+// TestEnqueueEvent will confirm the behavior of the signal channel for enqueues, it will
 // operate off of the idea that a fixed queue can utilize a buffered channel such that
 // a signal is received for every item enqueued
 func TestEnqueueEvent(t *testing.T, rate, timeout time.Duration, newQueue func(size int) interface {
@@ -116,7 +116,7 @@ func TestEnqueueEvent(t *testing.T, rate, timeout time.Duration, newQueue func(s
 
 		//attempt to enqueue multiple items and ensure you get a signal for
 		// every item enqueued
-		items := make([]interface{}, 0, len(examples))
+		items := make([]any, 0, len(examples))
 		for _, example := range examples {
 			items = append(items, example)
 		}

@@ -2,10 +2,10 @@ package goqueue
 
 import "time"
 
-//MustEnqueue will attempt to use the Enqueue() function until the enqueue is successful
+// MustEnqueue will attempt to use the Enqueue() function until the enqueue is successful
 // (no overflow); this function will block until success occurs or the done channel receives
 // a signal. An enqueue will attempt to occur at the rate configured
-func MustEnqueue(queue Enqueuer, item interface{}, done <-chan struct{}, rate time.Duration) bool {
+func MustEnqueue(queue Enqueuer, item any, done <-chan struct{}, rate time.Duration) bool {
 	if overflow := queue.Enqueue(item); !overflow {
 		return overflow
 	}
@@ -31,13 +31,13 @@ func MustEnqueue(queue Enqueuer, item interface{}, done <-chan struct{}, rate ti
 	}
 }
 
-//MustEnqueue will attempt to use the Enqueue() function until the enqueue is successful
+// MustEnqueue will attempt to use the Enqueue() function until the enqueue is successful
 // (no overflow); this function will block until success occurs or the done channel receives
 // a signal. An enqueue will be attempted for every signal received
 func MustEnqueueEvent(queue interface {
 	Enqueuer
 	Event
-}, item interface{}, done <-chan struct{}) bool {
+}, item any, done <-chan struct{}) bool {
 	if overflow := queue.Enqueue(item); !overflow {
 		return false
 	}
@@ -62,12 +62,13 @@ func MustEnqueueEvent(queue interface {
 	}
 }
 
-//MustEnqueueMultiple will attempt to enqueue until the done channel completes,
-//  at the configured rate or the number of elements are successfully enqueued
-//  into the provided queue
-//KIM: this function doesn't preserve the unit of work and may not be consistent
+// MustEnqueueMultiple will attempt to enqueue until the done channel completes,
+// at the configured rate or the number of elements are successfully enqueued
+// into the provided queue
+//
+// This function doesn't preserve the unit of work and may not be consistent
 // with concurent usage (although it is safe)
-func MustEnqueueMultiple(queue Enqueuer, items []interface{}, done <-chan struct{}, rate time.Duration) ([]interface{}, bool) {
+func MustEnqueueMultiple(queue Enqueuer, items []any, done <-chan struct{}, rate time.Duration) ([]any, bool) {
 	itemsRemaining, overflow := queue.EnqueueMultiple(items)
 	if !overflow {
 		return nil, false
@@ -99,14 +100,15 @@ func MustEnqueueMultiple(queue Enqueuer, items []interface{}, done <-chan struct
 	}
 }
 
-//MustEnqueueMultipleEvent will attempt to enqueue one or more items, upon initial
+// MustEnqueueMultipleEvent will attempt to enqueue one or more items, upon initial
 // failure, it'll use the event channels/signals to attempt to enqueue items
-//KIM: this function doesn't preserve the unit of work and may not be consistent
+//
+// This function doesn't preserve the unit of work and may not be consistent
 // with concurent usage (although it is safe)
 func MustEnqueueMultipleEvent(queue interface {
 	Enqueuer
 	Event
-}, items []interface{}, done <-chan struct{}) ([]interface{}, bool) {
+}, items []any, done <-chan struct{}) ([]any, bool) {
 	itemsRemaining, overflow := queue.EnqueueMultiple(items)
 	if !overflow {
 		return nil, false
@@ -137,11 +139,11 @@ func MustEnqueueMultipleEvent(queue interface {
 	}
 }
 
-//MustDequeue will attempt to dequeue at least one item at the rate configured until
+// MustDequeue will attempt to dequeue at least one item at the rate configured until
 // the done channel signals.
-//KIM: It's possible to provide a nil channel and this function will block (forever)
+// KIM: It's possible to provide a nil channel and this function will block (forever)
 // until a dequeue is successful
-func MustDequeue(queue Dequeuer, done <-chan struct{}, rate time.Duration) (interface{}, bool) {
+func MustDequeue(queue Dequeuer, done <-chan struct{}, rate time.Duration) (any, bool) {
 	if item, underflow := queue.Dequeue(); !underflow {
 		return item, false
 	}
@@ -170,7 +172,7 @@ func MustDequeue(queue Dequeuer, done <-chan struct{}, rate time.Duration) (inte
 func MustDequeueEvent(queue interface {
 	Dequeuer
 	Event
-}, done <-chan struct{}) (interface{}, bool) {
+}, done <-chan struct{}) (any, bool) {
 	signalIn := queue.GetSignalIn()
 	if item, underflow := queue.Dequeue(); !underflow {
 		return item, false
@@ -195,7 +197,7 @@ func MustDequeueEvent(queue interface {
 	}
 }
 
-func MustDequeueMultiple(queue Dequeuer, done <-chan struct{}, n int, rate time.Duration) []interface{} {
+func MustDequeueMultiple(queue Dequeuer, done <-chan struct{}, n int, rate time.Duration) []any {
 	items := queue.DequeueMultiple(n)
 	if len(items) == n {
 		return items
@@ -230,7 +232,7 @@ func MustDequeueMultiple(queue Dequeuer, done <-chan struct{}, n int, rate time.
 func MustDequeueMultipleEvent(queue interface {
 	Dequeuer
 	Event
-}, done <-chan struct{}, n int) []interface{} {
+}, done <-chan struct{}, n int) []any {
 	items := queue.DequeueMultiple(n)
 	if len(items) == n {
 		return items
@@ -261,7 +263,7 @@ func MustDequeueMultipleEvent(queue interface {
 	}
 }
 
-func MustFlush(queue Dequeuer, done <-chan struct{}, rate time.Duration) []interface{} {
+func MustFlush(queue Dequeuer, done <-chan struct{}, rate time.Duration) []any {
 	items := queue.Flush()
 	tFlush := time.NewTicker(rate)
 	defer tFlush.Stop()
@@ -284,7 +286,7 @@ func MustFlush(queue Dequeuer, done <-chan struct{}, rate time.Duration) []inter
 func MustFlushEvent(queue interface {
 	Dequeuer
 	Event
-}, done <-chan struct{}) []interface{} {
+}, done <-chan struct{}) []any {
 	items := queue.Flush()
 	signalIn := queue.GetSignalIn()
 	if done != nil {
@@ -303,7 +305,7 @@ func MustFlushEvent(queue interface {
 	}
 }
 
-func MustPeekHead(queue Peeker, done <-chan struct{}, rate time.Duration) (interface{}, bool) {
+func MustPeekHead(queue Peeker, done <-chan struct{}, rate time.Duration) (any, bool) {
 	if item, underflow := queue.PeekHead(); !underflow {
 		return item, false
 	}
@@ -332,7 +334,7 @@ func MustPeekHead(queue Peeker, done <-chan struct{}, rate time.Duration) (inter
 func MustPeekHeadEvent(queue interface {
 	Peeker
 	Event
-}, done <-chan struct{}) (interface{}, bool) {
+}, done <-chan struct{}) (any, bool) {
 	signalIn := queue.GetSignalIn()
 	if item, underflow := queue.PeekHead(); !underflow {
 		return item, false
@@ -357,7 +359,7 @@ func MustPeekHeadEvent(queue interface {
 	}
 }
 
-func MustPeekFromHead(queue Peeker, done <-chan struct{}, n int, rate time.Duration) []interface{} {
+func MustPeekFromHead(queue Peeker, done <-chan struct{}, n int, rate time.Duration) []any {
 	items := queue.PeekFromHead(n)
 	if len(items) == n {
 		return items
@@ -392,7 +394,7 @@ func MustPeekFromHead(queue Peeker, done <-chan struct{}, n int, rate time.Durat
 func MustPeekFromHeadEvent(queue interface {
 	Peeker
 	Event
-}, done <-chan struct{}, n int) []interface{} {
+}, done <-chan struct{}, n int) []any {
 	items := queue.PeekFromHead(n)
 	if len(items) == n {
 		return items
@@ -423,7 +425,7 @@ func MustPeekFromHeadEvent(queue interface {
 	}
 }
 
-func MustPeek(queue Peeker, done <-chan struct{}, rate time.Duration) []interface{} {
+func MustPeek(queue Peeker, done <-chan struct{}, rate time.Duration) []any {
 	items := queue.Peek()
 	tPeek := time.NewTicker(rate)
 	defer tPeek.Stop()
@@ -446,7 +448,7 @@ func MustPeek(queue Peeker, done <-chan struct{}, rate time.Duration) []interfac
 func MustPeekEvent(queue interface {
 	Peeker
 	Event
-}, done <-chan struct{}) []interface{} {
+}, done <-chan struct{}) []any {
 	items := queue.Peek()
 	signalIn := queue.GetSignalIn()
 	if done != nil {

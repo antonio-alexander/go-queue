@@ -1,7 +1,6 @@
 package finite_test
 
 import (
-	"math/rand"
 	"testing"
 	"time"
 
@@ -15,10 +14,6 @@ const (
 	mustTimeout = time.Second
 	mustRate    = time.Millisecond
 )
-
-func init() {
-	rand.Seed(int64(time.Now().Nanosecond()))
-}
 
 func TestFiniteQueue(t *testing.T) {
 	t.Run("Test Enqueue", finite_tests.TestEnqueue(t, mustRate, mustTimeout, func(size int) interface {

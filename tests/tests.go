@@ -116,7 +116,7 @@ func TestDequeue(t *testing.T, rate, timeout time.Duration, newQueue func(size i
 	return func(t *testing.T) {
 		//generate examples
 		examples := goqueue.ExampleGenFloat64()
-		items := make([]interface{}, 0, len(examples))
+		items := make([]any, 0, len(examples))
 		for _, example := range examples {
 			items = append(items, example)
 		}
@@ -186,7 +186,7 @@ func TestDequeueMultiple(t *testing.T, rate, timeout time.Duration, newQueue fun
 		assert.Empty(t, items)
 
 		//enqueue items
-		items = make([]interface{}, 0, len(examples))
+		items = make([]any, 0, len(examples))
 		for _, example := range examples {
 			items = append(items, example)
 		}
@@ -242,7 +242,7 @@ func TestFlush(t *testing.T, rate, timeout time.Duration, newQueue func(int) int
 		assert.Empty(t, items)
 
 		//enqueue items
-		items = make([]interface{}, 0, len(examples))
+		items = make([]any, 0, len(examples))
 		for _, example := range examples {
 			items = append(items, example)
 		}
@@ -291,7 +291,7 @@ func TestDequeueEvent(t *testing.T, rate, timeout time.Duration, newQueue func(s
 		signalOut := q.GetSignalOut()
 
 		//enqueue multiple items (to be dequeued)
-		items := make([]interface{}, 0, len(examples))
+		items := make([]any, 0, len(examples))
 		for _, example := range examples {
 			items = append(items, example)
 		}
@@ -318,7 +318,7 @@ func TestDequeueEvent(t *testing.T, rate, timeout time.Duration, newQueue func(s
 		}
 
 		//enqueue multiple items (to be dequeued)
-		items = make([]interface{}, 0, len(examples))
+		items = make([]any, 0, len(examples))
 		for _, example := range examples {
 			items = append(items, example)
 		}

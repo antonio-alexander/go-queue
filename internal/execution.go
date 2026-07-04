@@ -4,9 +4,9 @@ import (
 	"time"
 )
 
-//RotateLeft can be used to perform an in-place rotation
+// RotateLeft can be used to perform an in-place rotation
 // left of a slice of empty interface
-func RotateLeft(dataIn []interface{}) []interface{} {
+func RotateLeft(dataIn []any) []any {
 	if len(dataIn) > 1 {
 		copy(dataIn, append(dataIn[1:], dataIn[:1]...))
 		return dataIn
@@ -14,28 +14,29 @@ func RotateLeft(dataIn []interface{}) []interface{} {
 	return dataIn
 }
 
-//RotateRight can be used to perform an in-place rotation
+// RotateRight can be used to perform an in-place rotation
 // right of a slice of empty interface
-func RotateRight(dataIn []interface{}) []interface{} {
+func RotateRight(dataIn []any) []any {
 	if len(dataIn) > 1 {
-		copy(dataIn, append(dataIn[len(dataIn)-1:], dataIn[:len(dataIn)-1]...))
+		copy(dataIn, append(dataIn[len(dataIn)-1:],
+			dataIn[:len(dataIn)-1]...))
 		return dataIn
 	}
 	return dataIn
 }
 
-//Enqueue can be used  to add an item to the back of a queue while maintaining
+// Enqueue can be used  to add an item to the back of a queue while maintaining
 // it's capacity (e.g. in-place) it will return true if the queue is full
-func Enqueue(dataIn []interface{}, item interface{}) (bool, []interface{}) {
+func Enqueue(dataIn []any, item any) (bool, []any) {
 	if len(dataIn) >= cap(dataIn) {
 		return true, dataIn
 	}
 	return false, append(dataIn, item)
 }
 
-//EnqueueInFront can be used to add an item to the front of the queue while maintaining
+// EnqueueInFront can be used to add an item to the front of the queue while maintaining
 // its capacity, it will return true if the queue is full
-func EnqueueInFront(data []interface{}, item interface{}) (bool, []interface{}) {
+func EnqueueInFront(data []any, item any) (bool, []any) {
 	if len(data) >= cap(data) {
 		return true, data
 	}
@@ -43,9 +44,9 @@ func EnqueueInFront(data []interface{}, item interface{}) (bool, []interface{}) 
 	return false, RotateRight(data)
 }
 
-//Dequeue can be used to remove an item from the queue and reduce its
+// Dequeue can be used to remove an item from the queue and reduce its
 // capacity by one
-func Dequeue(data []interface{}) (interface{}, []interface{}, bool) {
+func Dequeue(data []any) (any, []any, bool) {
 	if len(data) <= 0 {
 		return nil, data, true
 	}
@@ -58,10 +59,10 @@ func Dequeue(data []interface{}) (interface{}, []interface{}, bool) {
 	return item, data, false
 }
 
-//DequeueMultiple will return a number of items less than or equal to the value of
-//n while maintaining the input data on the second slice of interface, it will return
+// DequeueMultiple will return a number of items less than or equal to the value of
+// n while maintaining the input data on the second slice of interface, it will return
 // true if there are no items to dequeue
-func DequeueMultiple(n int, data []interface{}) ([]interface{}, []interface{}, bool) {
+func DequeueMultiple(n int, data []any) ([]any, []any, bool) {
 	var l int
 
 	//get the length of the data, underflow if no data, then
@@ -72,9 +73,9 @@ func DequeueMultiple(n int, data []interface{}) ([]interface{}, []interface{}, b
 	if n > l {
 		n = l
 	}
-	items := make([]interface{}, 0, n)
-	for i := 0; i < n; i++ {
-		var item interface{}
+	items := make([]any, 0, n)
+	for range n {
+		var item any
 
 		item, data, _ = Dequeue(data)
 		items = append(items, item)
@@ -82,7 +83,7 @@ func DequeueMultiple(n int, data []interface{}) ([]interface{}, []interface{}, b
 	return items, data, false
 }
 
-//SendSignal will perform a non-blocking send with or without
+// SendSignal will perform a non-blocking send with or without
 // a timeout depending on whether ConfigSignalTimeout is greater
 // than 0
 func SendSignal(signal chan struct{}, timeout ...time.Duration) bool {

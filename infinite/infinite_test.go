@@ -1,7 +1,6 @@
 package infinite_test
 
 import (
-	"math/rand"
 	"testing"
 	"time"
 
@@ -17,10 +16,6 @@ const (
 	mustTimeout   = time.Second
 	mustRate      = time.Millisecond
 )
-
-func init() {
-	rand.Seed(int64(time.Now().Nanosecond()))
-}
 
 //TODO: test the growing of the internal slice
 
